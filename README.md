@@ -63,4 +63,4 @@ Found a bug or have a feature idea? Open an issue or submit a PR!
 
 ---
 
-Created by [Your Name] - Inspired by the AI Evals course
+Created by pmarsh41
