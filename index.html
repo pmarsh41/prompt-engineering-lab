@@ -3,142 +3,745 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Feedback Counter</title>
+    <title>Interactive Prompt Engineering Lab with Gemini</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #38332F;
+        }
+        .calm-shadow {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .prompt-preview {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            counter-reset: line;
+        }
+        .nav-link {
+            transition: color 0.3s, border-color 0.3s;
+        }
+        .nav-link.active {
+            color: #3B82F6;
+            border-bottom-color: #3B82F6;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        textarea {
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        textarea:focus {
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+        .spinner {
+            border: 2px solid rgba(0,0,0,.1);
+            border-left-color: #3B82F6;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .feedback-box {
+            background-color: #EFF6FF;
+            color: #1E40AF;
+            border-left: 4px solid #3B82F6;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            transition: opacity 0.5s;
+        }
+    </style>
 </head>
-<body class="p-8 bg-gray-100">
-    <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow">
-        <h1 class="text-2xl font-bold mb-4">Feedback Counter Test</h1>
-        
-        <div class="mb-4">
-            <p class="text-sm text-gray-600 mb-2">Current counts: <span id="count-display" class="font-mono"></span></p>
-            <button id="reset-counts" class="text-sm bg-red-500 text-white px-2 py-1 rounded">Reset All Counts</button>
-        </div>
-        
-        <div class="space-y-4">
-            <div>
-                <label class="block font-medium mb-1">Role & Objective</label>
-                <textarea id="role" class="w-full border rounded p-2" rows="3" placeholder="Type something here..."></textarea>
-                <button class="feedback-btn mt-2 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded" data-target="role">
-                    ✨ Get Feedback (<span class="count">0</span>)
-                </button>
-                <div id="role-feedback" class="mt-2 p-3 bg-blue-50 rounded hidden"></div>
-            </div>
-            
-            <div>
-                <label class="block font-medium mb-1">Instructions: Dos</label>
-                <textarea id="dos" class="w-full border rounded p-2" rows="3" placeholder="Type something here..."></textarea>
-                <button class="feedback-btn mt-2 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded" data-target="dos">
-                    ✨ Get Feedback (<span class="count">0</span>)
-                </button>
-                <div id="dos-feedback" class="mt-2 p-3 bg-blue-50 rounded hidden"></div>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-30 w-full border-b border-gray-200/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-gray-800">Prompt Engineering Lab ✨ Gemini</h1>
+                </div>
+                <nav class="hidden md:flex md:space-x-8">
+                    <a href="#concepts" class="nav-link text-gray-500 hover:text-gray-900 border-b-2 border-transparent pb-1">Core Concepts</a>
+                    <a href="#crafter" class="nav-link text-gray-500 hover:text-gray-900 border-b-2 border-transparent pb-1">Prompt Crafter</a>
+                    <a href="#tester" class="nav-link text-gray-500 hover:text-gray-900 border-b-2 border-transparent pb-1">Query Tester</a>
+                </nav>
             </div>
         </div>
-        
-        <div class="mt-6 p-4 bg-gray-100 rounded">
-            <h3 class="font-bold mb-2">Debug Log:</h3>
-            <div id="debug-log" class="text-xs font-mono space-y-1"></div>
+    </header>
+
+    <!-- API Key Setup Banner -->
+    <div id="api-key-banner" class="bg-amber-50 border-b border-amber-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div class="flex items-center justify-between flex-wrap">
+                <div class="flex-1 flex items-center">
+                    <span class="flex p-2 rounded-lg bg-amber-100">
+                        <svg class="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        </svg>
+                    </span>
+                    <p class="ml-3 font-medium text-amber-700">
+                        <span id="api-key-status">No API key set</span>
+                    </p>
+                </div>
+                <div class="flex-shrink-0">
+                    <button id="setup-api-key-btn" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-1 px-3 rounded-md text-sm">
+                        Setup API Key
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+        <section id="concepts" class="mb-20 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Mastering Prompt Fundamentals</h2>
+                <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">A well-structured prompt is the key to unlocking an LLM's potential. It's an iterative process of writing, testing, and refining. Below are the key components of an effective prompt.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+                 <div class="bg-white p-6 rounded-xl calm-shadow">
+                    <h3 class="font-semibold text-lg text-gray-800">Role & Objective</h3>
+                    <p class="mt-2 text-gray-600">Define the LLM's persona and its overall goal. (e.g., "You are a helpful culinary assistant...")</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl calm-shadow">
+                    <h3 class="font-semibold text-lg text-gray-800">Instructions & Rules</h3>
+                    <p class="mt-2 text-gray-600">Provide clear, specific directives on what to do and what to avoid. Use lists for clarity.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl calm-shadow">
+                    <h3 class="font-semibold text-lg text-gray-800">Context</h3>
+                    <p class="mt-2 text-gray-600">Supply the background information, data, or text the LLM needs to perform the task.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl calm-shadow">
+                    <h3 class="font-semibold text-lg text-gray-800">Examples (Few-Shot)</h3>
+                    <p class="mt-2 text-gray-600">Offer input-output pairs to guide the model on format, style, and detail.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl calm-shadow">
+                    <h3 class="font-semibold text-lg text-gray-800">Reasoning Steps</h3>
+                    <p class="mt-2 text-gray-600">Instruct the model to "think step by step" to break down complex problems before answering.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl calm-shadow">
+                    <h3 class="font-semibold text-lg text-gray-800">Output Formatting</h3>
+                    <p class="mt-2 text-gray-600">Explicitly define the desired structure of the response, often using Markdown.</p>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl calm-shadow p-8">
+                <h3 class="text-2xl font-bold text-center text-gray-900 mb-4">Anatomy of a Prompt</h3>
+                <p class="text-center text-gray-600 mb-8">While every prompt is different, this gives a general idea of component weight in a complex system prompt.</p>
+                <div class="chart-container">
+                    <canvas id="promptAnatomyChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-20 border-gray-200">
+
+        <section id="crafter" class="mb-20 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 id="crafter-title" class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">The Prompt Crafter</h2>
+                <p id="crafter-desc" class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">First, generate a new scenario. Then, fill out the fields below to build your system prompt. Use the ✨ buttons to get guiding questions from your AI coach.</p>
+            </div>
+
+            <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl calm-shadow mb-12 text-center">
+                <h3 class="block text-lg font-semibold text-gray-800">1. Start Your Practice</h3>
+                <p class="text-sm text-gray-600 mt-1 mb-3">Click the button below to get a new, random scenario to build a prompt for.</p>
+                <button id="generate-scenario-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors flex items-center justify-center w-52 mx-auto">
+                    <span class="btn-text">Generate New Scenario</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mt-12">
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <label for="role" class="block text-sm font-medium text-gray-700">2. Role & Objective</label>
+                            <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="role" data-label="Role & Objective">✨ Get Feedback</button>
+                        </div>
+                        <textarea id="role" name="role" rows="3" class="prompt-input mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3" placeholder="Start by defining the AI's persona and its main goal..."></textarea>
+                        <div id="role-feedback" class="feedback-box hidden"></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <label for="dos" class="block text-sm font-medium text-gray-700">3. Instructions: Dos (What to always do)</label>
+                            <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="dos" data-label="Instructions: Dos">✨ Get Feedback</button>
+                        </div>
+                        <textarea id="dos" name="dos" rows="4" class="prompt-input mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3" placeholder="List the positive rules. What must it always do? Use a bulleted list..."></textarea>
+                        <div id="dos-feedback" class="feedback-box hidden"></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <label for="donts" class="block text-sm font-medium text-gray-700">4. Instructions: Don'ts (What to never do)</label>
+                            <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="donts" data-label="Instructions: Don'ts">✨ Get Feedback</button>
+                        </div>
+                        <textarea id="donts" name="donts" rows="3" class="prompt-input mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3" placeholder="List the negative rules. What must it never do? Use a bulleted list..."></textarea>
+                        <div id="donts-feedback" class="feedback-box hidden"></div>
+                    </div>
+                     <div>
+                        <div class="flex justify-between items-center">
+                            <label for="agency" class="block text-sm font-medium text-gray-700">5. LLM Agency & Creativity</label>
+                            <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="agency" data-label="LLM Agency & Creativity">✨ Get Feedback</button>
+                        </div>
+                        <textarea id="agency" name="agency" rows="3" class="prompt-input mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3" placeholder="Define its freedom. Can it make suggestions? Can it be creative?"></textarea>
+                        <div id="agency-feedback" class="feedback-box hidden"></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <label for="formatting" class="block text-sm font-medium text-gray-700">6. Output Formatting Constraints</label>
+                            <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="formatting" data-label="Output Formatting Constraints">✨ Get Feedback</button>
+                        </div>
+                        <textarea id="formatting" name="formatting" rows="5" class="prompt-input mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3" placeholder="Be very specific about the output structure. Use Markdown examples..."></textarea>
+                        <div id="formatting-feedback" class="feedback-box hidden"></div>
+                    </div>
+                </div>
+
+                <div class="sticky top-24 h-fit">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-medium text-gray-700">Live Prompt Preview</label>
+                        <button id="copy-prompt-btn" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-2 rounded-md flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            <span class="btn-copy-text">Copy</span>
+                        </button>
+                    </div>
+                    <div class="bg-gray-800 text-white rounded-xl calm-shadow p-4 h-full min-h-[500px] overflow-y-auto">
+                        <pre id="prompt-preview-content" class="prompt-preview"></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-20 border-gray-200">
+
+        <section id="tester" class="scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">The Query Tester</h2>
+                <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Once you've drafted your prompt, test its performance. Add diverse queries to the list below and run them against the Gemini API.</p>
+            </div>
+
+            <div class="max-w-2xl mx-auto">
+                <div class="flex gap-2">
+                    <input type="text" id="query-input" class="flex-grow block w-full rounded-md border-gray-300 shadow-sm p-3" placeholder="Enter a test query...">
+                    <button id="add-query-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors">Add Query</button>
+                </div>
+
+                <div id="query-list" class="mt-8 space-y-4">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- API Key Modal -->
+    <div id="api-key-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Setup Gemini API Key</h3>
+                
+                <div class="bg-blue-50 p-4 rounded-md mb-4">
+                    <h4 class="text-sm font-semibold text-blue-900 mb-2">How to get your API key:</h4>
+                    <ol class="text-sm text-blue-700 list-decimal list-inside space-y-1">
+                        <li>Visit <a href="https://makersuite.google.com/app/apikey" target="_blank" class="underline font-medium">Google AI Studio</a></li>
+                        <li>Sign in with your Google account</li>
+                        <li>Click "Create API Key"</li>
+                        <li>Copy your key and paste it below</li>
+                    </ol>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="api-key-input" class="block text-sm font-medium text-gray-700 mb-2">Your Gemini API Key</label>
+                    <input type="password" id="api-key-input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="AIza...">
+                    <p class="mt-1 text-xs text-gray-500">Your key is stored locally in your browser only. It never leaves your device.</p>
+                </div>
+                
+                <div class="flex gap-2">
+                    <button id="save-api-key-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">
+                        Save Key
+                    </button>
+                    <button id="cancel-api-key-btn" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-md">
+                        Cancel
+                    </button>
+                </div>
+                
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <button id="remove-api-key-btn" class="text-sm text-red-600 hover:text-red-800">
+                        Remove Saved Key
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="simulation-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-left">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Gemini API Response</h3>
+                    <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
+                </div>
+                <div id="modal-query" class="text-sm text-gray-500 p-3 bg-gray-50 rounded-md mb-4"></div>
+                <div id="modal-response" class="mt-2 px-4 py-3 bg-blue-50/50 rounded-md text-gray-800 prose max-w-none min-h-[100px]"></div>
+            </div>
+        </div>
+    </div>
+
+
     <script>
-        // Initialize feedback counts
-        let feedbackCounts = JSON.parse(localStorage.getItem('test_feedback_counts')) || {};
-        
-        function log(message) {
-            const logDiv = document.getElementById('debug-log');
-            const entry = document.createElement('div');
-            entry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
-            logDiv.appendChild(entry);
-            console.log(message);
-        }
-        
-        function updateCountDisplay() {
-            document.getElementById('count-display').textContent = JSON.stringify(feedbackCounts);
+        document.addEventListener('DOMContentLoaded', () => {
+            // API Key Management
+            let GEMINI_API_KEY = localStorage.getItem('gemini_api_key') || '';
             
-            // Update individual button counts
-            document.querySelectorAll('.feedback-btn').forEach(btn => {
-                const targetId = btn.dataset.target;
-                const count = feedbackCounts[targetId] || 0;
-                btn.querySelector('.count').textContent = count;
-            });
-        }
-        
-        // Initial display
-        updateCountDisplay();
-        log('Page loaded, counts: ' + JSON.stringify(feedbackCounts));
-        
-        // Reset button
-        document.getElementById('reset-counts').addEventListener('click', () => {
-            feedbackCounts = {};
-            localStorage.setItem('test_feedback_counts', JSON.stringify(feedbackCounts));
-            updateCountDisplay();
-            
-            // Reset button colors
-            document.querySelectorAll('.feedback-btn').forEach(btn => {
-                btn.classList.remove('bg-green-100', 'text-green-700', 'hover:bg-green-200');
-                btn.classList.add('bg-blue-100', 'text-blue-700', 'hover:bg-blue-200');
-            });
-            
-            // Hide feedback boxes
-            document.querySelectorAll('[id$="-feedback"]').forEach(box => {
-                box.classList.add('hidden');
-            });
-            
-            log('Counts reset');
-        });
-        
-        // Feedback buttons
-        document.querySelectorAll('.feedback-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const btn = e.currentTarget;
-                const targetId = btn.dataset.target;
-                const textarea = document.getElementById(targetId);
-                const feedbackBox = document.getElementById(`${targetId}-feedback`);
+            // Feedback counter management
+            let feedbackCounts = JSON.parse(localStorage.getItem('feedback_counts')) || {};
+
+            const updateApiKeyStatus = () => {
+                const statusEl = document.getElementById('api-key-status');
+                const banner = document.getElementById('api-key-banner');
+                const bannerIcon = banner.querySelector('svg').parentElement;
                 
-                if (!textarea.value.trim()) {
-                    feedbackBox.innerHTML = "Please write something first!";
-                    feedbackBox.classList.remove('hidden');
-                    log(`Empty field for ${targetId}`);
-                    return;
+                if (GEMINI_API_KEY) {
+                    statusEl.textContent = `API key configured (${GEMINI_API_KEY.substring(0, 8)}...)`;
+                    banner.classList.remove('bg-amber-50', 'border-amber-200');
+                    banner.classList.add('bg-green-50', 'border-green-200');
+                    bannerIcon.classList.remove('bg-amber-100');
+                    bannerIcon.classList.add('bg-green-100');
+                    banner.querySelector('svg').classList.remove('text-amber-600');
+                    banner.querySelector('svg').classList.add('text-green-600');
+                    banner.querySelector('p').classList.remove('text-amber-700');
+                    banner.querySelector('p').classList.add('text-green-700');
+                    document.getElementById('setup-api-key-btn').classList.remove('bg-amber-600', 'hover:bg-amber-700');
+                    document.getElementById('setup-api-key-btn').classList.add('bg-green-600', 'hover:bg-green-700');
+                } else {
+                    statusEl.textContent = 'No API key set - Click to setup';
+                    banner.classList.remove('bg-green-50', 'border-green-200');
+                    banner.classList.add('bg-amber-50', 'border-amber-200');
+                    bannerIcon.classList.remove('bg-green-100');
+                    bannerIcon.classList.add('bg-amber-100');
+                    banner.querySelector('svg').classList.remove('text-green-600');
+                    banner.querySelector('svg').classList.add('text-amber-600');
+                    banner.querySelector('p').classList.remove('text-green-700');
+                    banner.querySelector('p').classList.add('text-amber-700');
+                    document.getElementById('setup-api-key-btn').classList.remove('bg-green-600', 'hover:bg-green-700');
+                    document.getElementById('setup-api-key-btn').classList.add('bg-amber-600', 'hover:bg-amber-700');
+                }
+            };
+
+            // Initialize on page load
+            updateApiKeyStatus();
+
+            const inputs = document.querySelectorAll('.prompt-input');
+            const previewContent = document.getElementById('prompt-preview-content');
+            let fullSystemPrompt = '';
+
+            const updatePreview = () => {
+                let promptText = "";
+                promptText += `### Role & Objective ###\n${document.getElementById('role').value}\n\n`;
+                promptText += `### Instructions: Dos ###\n${document.getElementById('dos').value}\n\n`;
+                promptText += `### Instructions: Don'ts ###\n${document.getElementById('donts').value}\n\n`;
+                promptText += `### LLM Agency & Creativity ###\n${document.getElementById('agency').value}\n\n`;
+                promptText += `### Output Formatting ###\n${document.getElementById('formatting').value}`;
+                
+                previewContent.textContent = promptText;
+                fullSystemPrompt = promptText;
+            };
+
+            inputs.forEach(input => {
+                input.addEventListener('keyup', updatePreview);
+                input.addEventListener('input', (e) => {
+                    const feedbackBox = document.getElementById(`${e.target.id}-feedback`);
+                    if (feedbackBox && !feedbackBox.classList.contains('hidden')) {
+                        feedbackBox.classList.add('hidden');
+                    }
+                });
+            });
+            
+            updatePreview();
+
+            const queryInput = document.getElementById('query-input');
+            const addQueryBtn = document.getElementById('add-query-btn');
+            const queryList = document.getElementById('query-list');
+
+            const addQueryToList = (queryText) => {
+                if (!queryText.trim()) return;
+                const queryItem = document.createElement('div');
+                queryItem.className = 'bg-white p-4 rounded-lg calm-shadow flex justify-between items-center';
+                queryItem.innerHTML = `
+                    <p class="text-gray-800 flex-grow pr-4">${queryText}</p>
+                    <button data-query="${queryText}" class="run-gemini-btn text-sm bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-3 rounded-md transition-colors flex items-center gap-2">
+                        ✨ Run with Gemini
+                    </button>
+                `;
+                queryList.appendChild(queryItem);
+            };
+
+            addQueryBtn.addEventListener('click', () => {
+                addQueryToList(queryInput.value);
+                queryInput.value = '';
+            });
+            
+            queryInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addQueryToList(queryInput.value);
+                    queryInput.value = '';
+                }
+            });
+
+            const modal = document.getElementById('simulation-modal');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const modalQuery = document.getElementById('modal-query');
+            const modalResponse = document.getElementById('modal-response');
+
+            async function callGeminiAPI(payload) {
+                if (!GEMINI_API_KEY) {
+                    document.getElementById('setup-api-key-btn').click();
+                    return "Please set up your Gemini API key first.";
                 }
                 
-                // Track feedback count
-                if (!feedbackCounts[targetId]) {
-                    feedbackCounts[targetId] = 0;
-                }
-                feedbackCounts[targetId]++;
-                localStorage.setItem('test_feedback_counts', JSON.stringify(feedbackCounts));
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
                 
-                log(`Feedback clicked for ${targetId}, count now: ${feedbackCounts[targetId]}`);
-                
-                // After 2 feedback requests, show only the nudge message (no API call)
-                if (feedbackCounts[targetId] > 2) {
-                    feedbackBox.innerHTML = `<strong>Progress Check:</strong><br><br><em style="color: #059669;">💡 You've received 2 rounds of feedback on this field. Great work! Now it's time to move forward and test your complete prompt. You can always refine it later based on real results.</em><br><br>💪 <strong>Next step:</strong> Complete the other fields and test your prompt with real queries.`;
-                    feedbackBox.classList.remove('hidden');
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 403 || response.status === 401) {
+                            return "API key error. Please check your key is valid and has access to Gemini API.";
+                        }
+                        const errorBody = await response.json();
+                        console.error("API Error:", errorBody);
+                        return `Error: ${response.status} ${response.statusText}. Check console for details.`;
+                    }
+
+                    const result = await response.json();
                     
-                    // Change button color
-                    btn.classList.remove('bg-blue-100', 'text-blue-700', 'hover:bg-blue-200');
-                    btn.classList.add('bg-green-100', 'text-green-700', 'hover:bg-green-200');
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        return result.candidates[0].content.parts[0].text;
+                    } else {
+                        console.warn("Unexpected API response structure:", result);
+                        return "Received an unexpected response from the API. The prompt might be blocked or the response empty.";
+                    }
+                } catch (error) {
+                    console.error("Fetch Error:", error);
+                    return "An error occurred while trying to contact the Gemini API.";
+                }
+            }
+
+            queryList.addEventListener('click', async (e) => {
+                const button = e.target.closest('.run-gemini-btn');
+                if (button) {
+                    const query = button.dataset.query;
+                    modalQuery.textContent = `Query: "${query}"`;
+                    modalResponse.innerHTML = '<div class="flex justify-center items-center h-full"><div class="spinner"></div></div>';
+                    modal.classList.remove('hidden');
+
+                    const originalButtonContent = button.innerHTML;
+                    button.innerHTML = '<div class="spinner"></div>';
+                    button.disabled = true;
+
+                    const payload = {
+                        contents: [{
+                            role: "user",
+                            parts: [{ text: `${fullSystemPrompt}\n\n---\n\nUSER QUERY:\n${query}` }]
+                        }]
+                    };
+
+                    const responseText = await callGeminiAPI(payload);
+                    modalResponse.innerHTML = responseText.replace(/\n/g, '<br>');
+
+                    button.innerHTML = originalButtonContent;
+                    button.disabled = false;
+                }
+            });
+            
+            document.querySelectorAll('.feedback-btn').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const targetId = e.target.dataset.target;
+                    const label = e.target.dataset.label;
+                    const textarea = document.getElementById(targetId);
+                    const userText = textarea.value;
+                    const feedbackBox = document.getElementById(`${targetId}-feedback`);
+
+                    if (!userText.trim()) {
+                        feedbackBox.innerHTML = "I can't give feedback on an empty field. Please write something first!";
+                        feedbackBox.classList.remove('hidden');
+                        return;
+                    }
                     
-                    log(`No more API calls for ${targetId} - showing nudge only`);
-                    updateCountDisplay();
-                    return;
+                    // Track feedback count
+                    if (!feedbackCounts[targetId]) {
+                        feedbackCounts[targetId] = 0;
+                    }
+                    feedbackCounts[targetId]++;
+                    localStorage.setItem('feedback_counts', JSON.stringify(feedbackCounts));
+                    
+                    const btn = e.target.closest('button');
+                    const originalButtonContent = btn.innerHTML;
+                    
+                    // After 2 feedback requests, show only the nudge message (no API call)
+                    if (feedbackCounts[targetId] >= 2) {
+                        feedbackBox.innerHTML = `<strong>Progress Check:</strong><br><br><em style="color: #059669;">💡 You've received 2 rounds of feedback on this field. Great work! Now it's time to move forward and test your complete prompt. You can always refine it later based on real results.</em><br><br>💪 <strong>Next step:</strong> Complete the other fields and test your prompt with real queries.`;
+                        feedbackBox.classList.remove('hidden');
+                        
+                        // Change button color to indicate completion
+                        btn.classList.remove('bg-blue-100', 'text-blue-700', 'hover:bg-blue-200');
+                        btn.classList.add('bg-green-100', 'text-green-700', 'hover:bg-green-200');
+                        
+                        return; // Exit early - no API call
+                    }
+                    
+                    // Normal feedback flow for first 2 attempts
+                    btn.innerHTML = '<div class="spinner !w-4 !h-4 mx-auto"></div>';
+                    btn.disabled = true;
+
+                    const metaPrompt = `You are an expert prompt engineering coach who uses the Socratic method. A user is working on a system prompt component: "${label}".
+                    
+                    Their current text is:
+                    ---
+                    ${userText}
+                    ---
+                    
+                    Your task is to help them improve it by asking one or two insightful, probing questions. Do NOT give them the answer or rewrite their text. Your questions should make them think more deeply about clarity, specificity, and edge cases.
+                    
+                    Example: If the user wrote "The AI should be helpful", you could ask "That's a good start! What does 'helpful' look like in this specific context? Could you list 2-3 concrete actions a 'helpful' AI would take for this user?".
+                    
+                    Respond ONLY with your Socratic questions.`;
+
+                    const payload = {
+                        contents: [{ role: "user", parts: [{ text: metaPrompt }] }]
+                    };
+
+                    const suggestion = await callGeminiAPI(payload);
+                    
+                    let feedbackContent = `<strong>Coach's Corner:</strong><br>${suggestion.replace(/\n/g, '<br>')}`;
+                    
+                    // Add note on second feedback
+                    if (feedbackCounts[targetId] === 2) {
+                        feedbackContent += `<br><br><em style="color: #1e40af; font-size: 0.875rem;">📝 This is your second round of feedback for this field. After this, focus on completing your full prompt!</em>`;
+                    }
+                    
+                    feedbackBox.innerHTML = feedbackContent;
+                    feedbackBox.classList.remove('hidden');
+
+                    btn.innerHTML = originalButtonContent;
+                    btn.disabled = false;
+                });
+            });
+
+            const generateScenarioBtn = document.getElementById('generate-scenario-btn');
+            generateScenarioBtn.addEventListener('click', async () => {
+                const btnText = generateScenarioBtn.querySelector('.btn-text') || generateScenarioBtn;
+                const originalButtonContent = btnText.innerHTML;
+                btnText.innerHTML = '<div class="spinner mx-auto"></div>';
+                generateScenarioBtn.disabled = true;
+
+                const metaPrompt = `You are a creative assistant. A user wants to practice prompt engineering. Generate a short, one-sentence description for an interesting AI persona or assistant they could build a prompt for. The scenario should be creative and specific enough to be a good exercise.
+
+                Example Scenarios:
+                - "A witty travel agent who specializes in finding hidden gems for budget-conscious solo travelers."
+                - "A sharp, unflappable AI poker mentor who helps you master nuanced strategies."
+                - "An AI sommelier that pairs wines with user-provided meals, explaining the 'why' behind each pairing."
+                - "A bot that translates complex legal jargon from documents into plain, easy-to-understand language."
+                
+                Respond only with the single sentence description for a new, random scenario.`;
+
+                const payload = {
+                    contents: [{ role: "user", parts: [{ text: metaPrompt }] }]
+                };
+
+                const responseText = await callGeminiAPI(payload);
+                
+                document.getElementById('crafter-title').textContent = `Your Scenario: ${responseText}`;
+                document.getElementById('crafter-desc').textContent = `Now, it's your turn! Fill out the prompt components below for this new AI assistant.`;
+                
+                inputs.forEach(input => {
+                    input.value = '';
+                    const feedbackBox = document.getElementById(`${input.id}-feedback`);
+                    if (feedbackBox) {
+                        feedbackBox.classList.add('hidden');
+                    }
+                });
+                
+                // Reset feedback counts for new scenario
+                feedbackCounts = {};
+                localStorage.setItem('feedback_counts', JSON.stringify(feedbackCounts));
+                
+                // Reset button colors
+                document.querySelectorAll('.feedback-btn').forEach(btn => {
+                    btn.classList.remove('bg-green-100', 'text-green-700', 'hover:bg-green-200');
+                    btn.classList.add('bg-blue-100', 'text-blue-700', 'hover:bg-blue-200');
+                });
+                
+                updatePreview();
+
+                btnText.innerHTML = originalButtonContent;
+                generateScenarioBtn.disabled = false;
+            });
+
+            const copyPromptBtn = document.getElementById('copy-prompt-btn');
+            copyPromptBtn.addEventListener('click', () => {
+                const promptText = previewContent.textContent;
+                
+                const textArea = document.createElement('textarea');
+                textArea.value = promptText;
+                
+                textArea.style.position = 'fixed';
+                textArea.style.top = 0;
+                textArea.style.left = 0;
+                textArea.style.opacity = 0;
+                
+                document.body.appendChild(textArea);
+                
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    const copyBtnText = copyPromptBtn.querySelector('.btn-copy-text');
+                    const originalBtnText = copyBtnText.textContent;
+                    copyBtnText.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyBtnText.textContent = originalBtnText;
+                    }, 2000);
+                } catch (err) {
+                    console.error('Fallback: Oops, unable to copy', err);
+                    alert('Failed to copy prompt.');
                 }
                 
-                // Simulate API response for first 2 attempts
-                let feedbackContent = `<strong>Coach's Corner:</strong><br>This is feedback #${feedbackCounts[targetId]} for the ${targetId} field. [Simulated Socratic question here]`;
-                
-                if (feedbackCounts[targetId] === 2) {
-                    feedbackContent += `<br><br><em style="color: #1e40af;">📝 This is your second round of feedback for this field. After this, focus on completing your full prompt!</em>`;
+                document.body.removeChild(textArea);
+            });
+
+            closeModalBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+            });
+
+            window.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
                 }
-                
-                log(`Showing coach feedback #${feedbackCounts[targetId]} for ${targetId}`);
-                
-                feedbackBox.innerHTML = feedbackContent;
-                feedbackBox.classList.remove('hidden');
-                
-                updateCountDisplay();
+                if (e.target === document.getElementById('api-key-modal')) {
+                    document.getElementById('api-key-modal').classList.add('hidden');
+                }
+            });
+
+            const promptAnatomyCtx = document.getElementById('promptAnatomyChart').getContext('2d');
+            new Chart(promptAnatomyCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Instructions & Rules', 'Output Formatting', 'Role & Objective', 'Context', 'Examples'],
+                    datasets: [{
+                        label: 'Anatomy of a Prompt',
+                        data: [35, 25, 15, 15, 10],
+                        backgroundColor: ['#60A5FA', '#93C5FD', '#BFDBFE', '#A5B4FC', '#C7D2FE'],
+                        borderColor: '#FDFBF8',
+                        borderWidth: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed !== null) { label += context.parsed + '%'; }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section');
+
+            const onScroll = () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 80) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            };
+
+            window.addEventListener('scroll', onScroll);
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelector(link.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+                });
+            });
+
+            // API Key Modal Handlers
+            const apiKeyModal = document.getElementById('api-key-modal');
+            const setupApiKeyBtn = document.getElementById('setup-api-key-btn');
+            const saveApiKeyBtn = document.getElementById('save-api-key-btn');
+            const cancelApiKeyBtn = document.getElementById('cancel-api-key-btn');
+            const removeApiKeyBtn = document.getElementById('remove-api-key-btn');
+            const apiKeyInput = document.getElementById('api-key-input');
+
+            setupApiKeyBtn.addEventListener('click', () => {
+                apiKeyInput.value = GEMINI_API_KEY;
+                apiKeyModal.classList.remove('hidden');
+            });
+
+            saveApiKeyBtn.addEventListener('click', () => {
+                const key = apiKeyInput.value.trim();
+                if (key) {
+                    GEMINI_API_KEY = key;
+                    localStorage.setItem('gemini_api_key', key);
+                    updateApiKeyStatus();
+                    apiKeyModal.classList.add('hidden');
+                }
+            });
+
+            cancelApiKeyBtn.addEventListener('click', () => {
+                apiKeyModal.classList.add('hidden');
+            });
+
+            removeApiKeyBtn.addEventListener('click', () => {
+                if (confirm('Remove your saved API key?')) {
+                    GEMINI_API_KEY = '';
+                    localStorage.removeItem('gemini_api_key');
+                    updateApiKeyStatus();
+                    apiKeyInput.value = '';
+                }
             });
         });
     </script>
