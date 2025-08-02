@@ -81,10 +81,13 @@
                 <div class="flex-shrink-0">
                     <h1 class="text-xl font-bold text-gray-800">Prompt Engineering Lab ✨ Gemini</h1>
                 </div>
-                <nav class="hidden md:flex md:space-x-8">
+                <nav class="hidden md:flex md:space-x-8 items-center">
                     <a href="#concepts" class="nav-link text-gray-500 hover:text-gray-900 border-b-2 border-transparent pb-1">Core Concepts</a>
                     <a href="#crafter" class="nav-link text-gray-500 hover:text-gray-900 border-b-2 border-transparent pb-1">Prompt Crafter</a>
                     <a href="#tester" class="nav-link text-gray-500 hover:text-gray-900 border-b-2 border-transparent pb-1">Query Tester</a>
+                    <button id="demo-mode-toggle" class="ml-4 px-4 py-2 rounded-md font-semibold transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300">
+                        🎬 Demo Mode: OFF
+                    </button>
                 </nav>
             </div>
         </div>
@@ -178,7 +181,10 @@
                     <div>
                         <div class="flex justify-between items-center">
                             <label for="role" class="block text-sm font-medium text-gray-700">2. Role & Objective</label>
-                            <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="role" data-label="Role & Objective">✨ Get Feedback</button>
+                            <div class="flex gap-2">
+                                <button class="show-answer-btn hidden text-xs bg-green-100 text-green-700 hover:bg-green-200 font-semibold py-1 px-2 rounded-md" data-target="role">📝 Show Answer</button>
+                                <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="role" data-label="Role & Objective">✨ Get Feedback</button>
+                            </div>
                         </div>
                         <textarea id="role" name="role" rows="3" class="prompt-input mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3" placeholder="Start by defining the AI's persona and its main goal..."></textarea>
                         <div id="role-feedback" class="feedback-box hidden"></div>
@@ -186,7 +192,10 @@
                     <div>
                         <div class="flex justify-between items-center">
                             <label for="dos" class="block text-sm font-medium text-gray-700">3. Instructions: Dos (What to always do)</label>
-                            <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="dos" data-label="Instructions: Dos">✨ Get Feedback</button>
+                            <div class="flex gap-2">
+                                <button class="show-answer-btn hidden text-xs bg-green-100 text-green-700 hover:bg-green-200 font-semibold py-1 px-2 rounded-md" data-target="dos">📝 Show Answer</button>
+                                <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="dos" data-label="Instructions: Dos">✨ Get Feedback</button>
+                            </div>
                         </div>
                         <textarea id="dos" name="dos" rows="4" class="prompt-input mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3" placeholder="List the positive rules. What must it always do? Use a bulleted list..."></textarea>
                         <div id="dos-feedback" class="feedback-box hidden"></div>
@@ -194,7 +203,10 @@
                     <div>
                         <div class="flex justify-between items-center">
                             <label for="donts" class="block text-sm font-medium text-gray-700">4. Instructions: Don'ts (What to never do)</label>
-                            <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="donts" data-label="Instructions: Don'ts">✨ Get Feedback</button>
+                            <div class="flex gap-2">
+                                <button class="show-answer-btn hidden text-xs bg-green-100 text-green-700 hover:bg-green-200 font-semibold py-1 px-2 rounded-md" data-target="donts">📝 Show Answer</button>
+                                <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="donts" data-label="Instructions: Don'ts">✨ Get Feedback</button>
+                            </div>
                         </div>
                         <textarea id="donts" name="donts" rows="3" class="prompt-input mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3" placeholder="List the negative rules. What must it never do? Use a bulleted list..."></textarea>
                         <div id="donts-feedback" class="feedback-box hidden"></div>
@@ -202,7 +214,10 @@
                      <div>
                         <div class="flex justify-between items-center">
                             <label for="agency" class="block text-sm font-medium text-gray-700">5. LLM Agency & Creativity</label>
-                            <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="agency" data-label="LLM Agency & Creativity">✨ Get Feedback</button>
+                            <div class="flex gap-2">
+                                <button class="show-answer-btn hidden text-xs bg-green-100 text-green-700 hover:bg-green-200 font-semibold py-1 px-2 rounded-md" data-target="agency">📝 Show Answer</button>
+                                <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="agency" data-label="LLM Agency & Creativity">✨ Get Feedback</button>
+                            </div>
                         </div>
                         <textarea id="agency" name="agency" rows="3" class="prompt-input mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3" placeholder="Define its freedom. Can it make suggestions? Can it be creative?"></textarea>
                         <div id="agency-feedback" class="feedback-box hidden"></div>
@@ -210,7 +225,10 @@
                     <div>
                         <div class="flex justify-between items-center">
                             <label for="formatting" class="block text-sm font-medium text-gray-700">6. Output Formatting Constraints</label>
-                            <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="formatting" data-label="Output Formatting Constraints">✨ Get Feedback</button>
+                            <div class="flex gap-2">
+                                <button class="show-answer-btn hidden text-xs bg-green-100 text-green-700 hover:bg-green-200 font-semibold py-1 px-2 rounded-md" data-target="formatting">📝 Show Answer</button>
+                                <button class="feedback-btn text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-2 rounded-md" data-target="formatting" data-label="Output Formatting Constraints">✨ Get Feedback</button>
+                            </div>
                         </div>
                         <textarea id="formatting" name="formatting" rows="5" class="prompt-input mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3" placeholder="Be very specific about the output structure. Use Markdown examples..."></textarea>
                         <div id="formatting-feedback" class="feedback-box hidden"></div>
@@ -313,6 +331,12 @@
             
             // Feedback counter management
             let feedbackCounts = JSON.parse(localStorage.getItem('feedback_counts')) || {};
+            
+            // Demo Mode Management
+            let isDemoMode = localStorage.getItem('demo_mode') === 'true';
+            let demoAnswers = {};
+            let userContent = {}; // Store user's original content
+            let currentScenario = '';
 
             const updateApiKeyStatus = () => {
                 const statusEl = document.getElementById('api-key-status');
@@ -348,6 +372,77 @@
 
             // Initialize on page load
             updateApiKeyStatus();
+            
+            // Demo Mode Functions
+            const updateDemoModeUI = () => {
+                const toggle = document.getElementById('demo-mode-toggle');
+                const showAnswerBtns = document.querySelectorAll('.show-answer-btn');
+                
+                if (isDemoMode) {
+                    toggle.textContent = '🎬 Demo Mode: ON';
+                    toggle.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                    toggle.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
+                    showAnswerBtns.forEach(btn => btn.classList.remove('hidden'));
+                } else {
+                    toggle.textContent = '🎬 Demo Mode: OFF';
+                    toggle.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
+                    toggle.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                    showAnswerBtns.forEach(btn => btn.classList.add('hidden'));
+                }
+            };
+            
+            const generateDemoAnswers = async (scenario) => {
+                if (!GEMINI_API_KEY || !scenario) return;
+                
+                const fields = [
+                    { id: 'role', prompt: `Given this AI assistant scenario: "${scenario}", write a clear and concise Role & Objective section for a system prompt. This should define the AI's persona and main goal in 2-3 sentences.` },
+                    { id: 'dos', prompt: `Given this AI assistant scenario: "${scenario}", write the "Dos" section - positive instructions for what the AI should always do. Format as a bulleted list with 4-5 specific, actionable items.` },
+                    { id: 'donts', prompt: `Given this AI assistant scenario: "${scenario}", write the "Don'ts" section - negative instructions for what the AI should never do. Format as a bulleted list with 3-4 specific restrictions.` },
+                    { id: 'agency', prompt: `Given this AI assistant scenario: "${scenario}", write the LLM Agency & Creativity section. Define the AI's level of autonomy, decision-making freedom, and creative boundaries in 2-3 sentences.` },
+                    { id: 'formatting', prompt: `Given this AI assistant scenario: "${scenario}", write the Output Formatting Constraints section. Be specific about the structure, format, and style of responses. Include a brief example if relevant.` }
+                ];
+                
+                // Show loading state on Show Answer buttons
+                document.querySelectorAll('.show-answer-btn').forEach(btn => {
+                    btn.disabled = true;
+                    btn.textContent = '⏳ Generating...';
+                });
+                
+                try {
+                    // Generate all answers in parallel
+                    const promises = fields.map(async (field) => {
+                        const payload = {
+                            contents: [{ role: "user", parts: [{ text: field.prompt }] }]
+                        };
+                        const response = await callGeminiAPI(payload);
+                        return { id: field.id, answer: response };
+                    });
+                    
+                    const results = await Promise.all(promises);
+                    
+                    // Store the generated answers
+                    demoAnswers = {};
+                    results.forEach(result => {
+                        demoAnswers[result.id] = result.answer;
+                    });
+                    
+                    // Update button states
+                    document.querySelectorAll('.show-answer-btn').forEach(btn => {
+                        btn.disabled = false;
+                        btn.textContent = '📝 Show Answer';
+                    });
+                    
+                } catch (error) {
+                    console.error('Error generating demo answers:', error);
+                    document.querySelectorAll('.show-answer-btn').forEach(btn => {
+                        btn.disabled = false;
+                        btn.textContent = '❌ Error';
+                    });
+                }
+            };
+            
+            // Initialize Demo Mode UI
+            updateDemoModeUI();
 
             const inputs = document.querySelectorAll('.prompt-input');
             const previewContent = document.getElementById('prompt-preview-content');
@@ -551,6 +646,48 @@
                     btn.disabled = false;
                 });
             });
+            
+            // Demo Mode Toggle
+            const demoModeToggle = document.getElementById('demo-mode-toggle');
+            demoModeToggle.addEventListener('click', () => {
+                isDemoMode = !isDemoMode;
+                localStorage.setItem('demo_mode', isDemoMode);
+                updateDemoModeUI();
+                
+                // If turning on Demo Mode and we have a scenario, generate answers
+                if (isDemoMode && currentScenario) {
+                    generateDemoAnswers(currentScenario);
+                }
+            });
+            
+            // Show Answer Buttons
+            document.querySelectorAll('.show-answer-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    
+                    if (btn.textContent.includes('Show Answer')) {
+                        // Save user's content
+                        userContent[targetId] = input.value;
+                        // Show demo answer
+                        if (demoAnswers[targetId]) {
+                            input.value = demoAnswers[targetId];
+                            btn.textContent = '👤 Show My Answer';
+                            btn.classList.remove('bg-green-100', 'text-green-700', 'hover:bg-green-200');
+                            btn.classList.add('bg-blue-100', 'text-blue-700', 'hover:bg-blue-200');
+                        }
+                    } else {
+                        // Restore user's content
+                        input.value = userContent[targetId] || '';
+                        btn.textContent = '📝 Show Answer';
+                        btn.classList.remove('bg-blue-100', 'text-blue-700', 'hover:bg-blue-200');
+                        btn.classList.add('bg-green-100', 'text-green-700', 'hover:bg-green-200');
+                    }
+                    
+                    // Trigger preview update
+                    updatePreview();
+                });
+            });
 
             const generateScenarioBtn = document.getElementById('generate-scenario-btn');
             generateScenarioBtn.addEventListener('click', async () => {
@@ -581,8 +718,15 @@
 
                 const responseText = await callGeminiAPI(payload);
                 
+                // Store the current scenario
+                currentScenario = responseText;
+                
                 document.getElementById('crafter-title').textContent = `Your Scenario: ${responseText}`;
                 document.getElementById('crafter-desc').textContent = `Now, it's your turn! Fill out the prompt components below for this new AI assistant.`;
+                
+                // Clear user content and demo answers
+                userContent = {};
+                demoAnswers = {};
                 
                 inputs.forEach(input => {
                     input.value = '';
@@ -590,6 +734,13 @@
                     if (feedbackBox) {
                         feedbackBox.classList.add('hidden');
                     }
+                });
+                
+                // Reset Show Answer buttons
+                document.querySelectorAll('.show-answer-btn').forEach(btn => {
+                    btn.textContent = '📝 Show Answer';
+                    btn.classList.remove('bg-blue-100', 'text-blue-700', 'hover:bg-blue-200');
+                    btn.classList.add('bg-green-100', 'text-green-700', 'hover:bg-green-200');
                 });
                 
                 // Reset feedback counts for new scenario
@@ -603,6 +754,11 @@
                 });
                 
                 updatePreview();
+                
+                // If Demo Mode is on, generate answers in the background
+                if (isDemoMode) {
+                    generateDemoAnswers(responseText);
+                }
 
                 btnText.innerHTML = originalButtonContent;
                 generateScenarioBtn.disabled = false;
