@@ -18,7 +18,7 @@ A hands-on learning environment for mastering prompt engineering with Google's G
    - Keep it safe - you'll need it in step 3
 
 2. **Access the Lab**:
-   - Visit [YOUR-GITHUB-USERNAME.github.io/prompt-engineering-lab](https://YOUR-GITHUB-USERNAME.github.io/prompt-engineering-lab)
+   - Visit [pmarsh41.github.io/prompt-engineering-lab](https://pmarsh41.github.io/prompt-engineering-lab)
 
 3. **Setup Your API Key**:
    - Click "Setup API Key" in the yellow banner
@@ -63,4 +63,4 @@ Found a bug or have a feature idea? Open an issue or submit a PR!
 
 ---
 
-Created by [Your Name] - Inspired by the AI Evals course
+Created by pmarsh41
