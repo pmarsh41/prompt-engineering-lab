@@ -441,16 +441,21 @@
                 });
                 
                 try {
-                    // Generate all answers in parallel
-                    const promises = fields.map(async (field) => {
+                    // Generate answers sequentially to avoid rate limiting
+                    const results = [];
+                    for (const field of fields) {
                         const payload = {
                             contents: [{ role: "user", parts: [{ text: field.prompt }] }]
                         };
                         const response = await callGeminiAPI(payload);
-                        return { id: field.id, answer: response };
-                    });
-                    
-                    const results = await Promise.all(promises);
+                        results.push({ id: field.id, answer: response });
+                        
+                        // Update progress indicator for each completed field
+                        const btn = document.querySelector(`.show-answer-btn[data-target="${field.id}"]`);
+                        if (btn) {
+                            btn.textContent = '✅ Ready';
+                        }
+                    }
                     
                     // Store the generated answers
                     demoAnswers = {};
@@ -647,7 +652,15 @@
             const modalQuery = document.getElementById('modal-query');
             const modalResponse = document.getElementById('modal-response');
 
-            async function callGeminiAPI(payload) {
+            // Helper function to delay execution
+            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+            
+            // Rate limiting queue
+            let apiCallQueue = Promise.resolve();
+            let lastCallTime = 0;
+            const MIN_DELAY_BETWEEN_CALLS = 1000; // 1 second minimum between calls
+            
+            async function callGeminiAPI(payload, retries = 3) {
                 if (!GEMINI_API_KEY) {
                     document.getElementById('setup-api-key-btn').click();
                     return "Please set up your Gemini API key first.";
@@ -655,36 +668,66 @@
                 
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
                 
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        if (response.status === 403 || response.status === 401) {
-                            return "API key error. Please check your key is valid and has access to Gemini API.";
-                        }
-                        const errorBody = await response.json();
-                        console.error("API Error:", errorBody);
-                        return `Error: ${response.status} ${response.statusText}. Check console for details.`;
+                // Queue this API call to ensure rate limiting
+                return apiCallQueue = apiCallQueue.then(async () => {
+                    // Ensure minimum delay between calls
+                    const now = Date.now();
+                    const timeSinceLastCall = now - lastCallTime;
+                    if (timeSinceLastCall < MIN_DELAY_BETWEEN_CALLS) {
+                        await delay(MIN_DELAY_BETWEEN_CALLS - timeSinceLastCall);
                     }
-
-                    const result = await response.json();
+                    lastCallTime = Date.now();
                     
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        return result.candidates[0].content.parts[0].text;
-                    } else {
-                        console.warn("Unexpected API response structure:", result);
-                        return "Received an unexpected response from the API. The prompt might be blocked or the response empty.";
+                    // Implement retry logic with exponential backoff
+                    for (let attempt = 0; attempt < retries; attempt++) {
+                        try {
+                            const response = await fetch(apiUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+
+                            if (!response.ok) {
+                                if (response.status === 429) {
+                                    // Rate limit hit - wait with exponential backoff
+                                    const backoffDelay = Math.min(1000 * Math.pow(2, attempt), 10000) + Math.random() * 1000;
+                                    console.log(`Rate limited (429). Waiting ${Math.round(backoffDelay)}ms before retry ${attempt + 1}/${retries}`);
+                                    if (attempt < retries - 1) {
+                                        await delay(backoffDelay);
+                                        continue;
+                                    }
+                                }
+                                
+                                if (response.status === 403 || response.status === 401) {
+                                    return "API key error. Please check your key is valid and has access to Gemini API.";
+                                }
+                                
+                                const errorBody = await response.json();
+                                console.error("API Error:", errorBody);
+                                return `Error: ${response.status} ${response.statusText}. Check console for details.`;
+                            }
+
+                            const result = await response.json();
+                            
+                            if (result.candidates && result.candidates.length > 0 &&
+                                result.candidates[0].content && result.candidates[0].content.parts &&
+                                result.candidates[0].content.parts.length > 0) {
+                                return result.candidates[0].content.parts[0].text;
+                            } else {
+                                console.warn("Unexpected API response structure:", result);
+                                return "Received an unexpected response from the API. The prompt might be blocked or the response empty.";
+                            }
+                        } catch (error) {
+                            console.error(`Fetch Error (attempt ${attempt + 1}/${retries}):`, error);
+                            if (attempt < retries - 1) {
+                                const backoffDelay = Math.min(1000 * Math.pow(2, attempt), 10000);
+                                await delay(backoffDelay);
+                                continue;
+                            }
+                            return "An error occurred while trying to contact the Gemini API.";
+                        }
                     }
-                } catch (error) {
-                    console.error("Fetch Error:", error);
-                    return "An error occurred while trying to contact the Gemini API.";
-                }
+                });
             }
 
             queryList.addEventListener('click', async (e) => {
